@@ -37,6 +37,9 @@
     line-height: 1;
     cursor: pointer;
     touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
     will-change: transform;
     transform-origin: center;
   }
@@ -97,7 +100,14 @@
     speed += 110;
   }
 
-  banana.addEventListener("pointerdown", addSpeed);
+  banana.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+    addSpeed();
+  });
+
+  banana.addEventListener("dragstart", (event) => {
+    event.preventDefault();
+  });
 
   banana.addEventListener("keydown", (event) => {
     if (event.key === "Enter" || event.key === " ") {
