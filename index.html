@@ -1,154 +1,263 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Banana Spinner</title>
+
 <style>
-  * { box-sizing: border-box; }
-  html, body {
-    margin: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    background: #fff;
-  }
+* {
+  box-sizing: border-box;
+}
 
-  body {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    user-select: none;
-    -webkit-user-select: none;
-  }
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #fff;
+}
 
-  #game {
-    width: 100%;
-    height: 100%;
-    min-height: 420px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-  }
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  -webkit-user-select: none;
+}
 
-  #banana {
-    font-size: clamp(150px, 25vw, 260px);
-    line-height: 1;
-    cursor: pointer;
-    touch-action: manipulation;
-    -webkit-user-select: none;
-    user-select: none;
-    -webkit-touch-callout: none;
-    will-change: transform;
-    transform-origin: center;
-  }
+#game {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
 
-  #counter {
-    position: absolute;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    font: 16px Arial, sans-serif;
-    color: #222;
-    pointer-events: none;
-  }
+#banana {
+  font-size: clamp(150px, 25vw, 260px);
+  line-height: 1;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  will-change: transform;
+}
+
+#stats {
+  position: absolute;
+  bottom: 18px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  font: 16px Arial, sans-serif;
+  color: #222;
+  pointer-events: none;
+}
+
+#stats span {
+  white-space: nowrap;
+}
 </style>
 </head>
+
 <body>
 
 <div id="game">
-  <div id="banana" role="button" tabindex="0" aria-label="Spin banana">🍌</div>
-  <div id="counter" aria-live="polite">0</div>
+  <div id="banana" tabindex="0">🍌</div>
+
+  <div id="stats">
+    <span id="count">0</span>
+    <span id="rate">0.0</span>
+  </div>
 </div>
 
 <script>
 (() => {
-  const banana = document.getElementById("banana");
-  const counter = document.getElementById("counter");
 
-  const SAVE_KEY = "banana-spin-save-v1";
+const banana = document.getElementById("banana");
+const countDisplay = document.getElementById("count");
+const rateDisplay = document.getElementById("rate");
 
-  let angle = 0;
-  let speed = 0;
-  let spins = 0;
-  let lastTime = performance.now();
-  let lastSave = 0;
+const SAVE_KEY = "banana-spin-save-v6";
 
-  // Load saved progress.
-  try {
-    const saved = JSON.parse(localStorage.getItem(SAVE_KEY));
-    if (saved) {
-      if (Number.isFinite(saved.angle)) angle = saved.angle;
-      if (Number.isFinite(saved.speed)) speed = saved.speed;
-      if (Number.isFinite(saved.spins)) spins = saved.spins;
-      counter.textContent = spins;
+let angle = 0;
+let speed = 0;
+let spins = 0;
+
+let lastTime = performance.now();
+let lastSave = 0;
+
+
+// Load saved data
+try {
+  const saved = JSON.parse(localStorage.getItem(SAVE_KEY));
+
+  if (saved) {
+    if (Number.isFinite(saved.angle)) {
+      angle = saved.angle;
     }
-  } catch (_) {}
 
-  function save() {
+    if (Number.isFinite(saved.speed)) {
+      speed = Math.max(0, saved.speed);
+    }
+
+    if (Number.isFinite(saved.spins)) {
+      spins = Math.max(0, Math.floor(saved.spins));
+    }
+  }
+} catch (e) {}
+
+
+// Number formatting
+function formatNumber(number) {
+
+  number = Math.max(0, Math.floor(number));
+
+  if (number >= 1000000000) {
+    return (
+      (number / 1000000000)
+        .toFixed(number >= 10000000000 ? 0 : 1)
+        .replace(/\.0$/, "")
+      + "B"
+    );
+  }
+
+  if (number >= 1000000) {
+    return (
+      (number / 1000000)
+        .toFixed(number >= 10000000 ? 0 : 1)
+        .replace(/\.0$/, "")
+      + "M"
+    );
+  }
+
+  return number.toLocaleString("en-US");
+}
+
+
+countDisplay.textContent = formatNumber(spins);
+
+
+// Clicking adds momentum
+function addSpeed() {
+  speed += 110;
+}
+
+
+banana.addEventListener("pointerdown", event => {
+  event.preventDefault();
+  addSpeed();
+});
+
+
+// Prevent dragging/selecting the banana
+banana.addEventListener("dragstart", event => {
+  event.preventDefault();
+});
+
+
+// Keyboard support
+banana.addEventListener("keydown", event => {
+
+  if (event.key === "Enter" || event.key === " ") {
+
+    event.preventDefault();
+
+    addSpeed();
+  }
+});
+
+
+// Main animation
+function animate(now) {
+
+  const deltaTime = Math.min(
+    (now - lastTime) / 1000,
+    0.05
+  );
+
+  lastTime = now;
+
+
+  // Rotate
+  angle += speed * deltaTime;
+
+
+  // Count completed rotations
+  const completedSpins = Math.floor(angle / 360);
+
+  if (completedSpins > spins) {
+
+    spins = completedSpins;
+
+    countDisplay.textContent = formatNumber(spins);
+  }
+
+
+  /*
+    Adaptive friction:
+
+    At high speed:
+      friction is relatively low.
+
+    As the banana slows down:
+      friction becomes stronger.
+
+    This makes it slow smoothly at first,
+    then settle to a stop faster.
+  */
+
+  const friction =
+    35 +
+    Math.max(0, 8 - speed / 25) * 8;
+
+
+  speed = Math.max(
+    0,
+    speed - friction * deltaTime
+  );
+
+
+  // Spins per second
+  rateDisplay.textContent =
+    (speed / 360).toFixed(1);
+
+
+  // Apply rotation
+  banana.style.transform =
+    `rotate(${angle}deg)`;
+
+
+  // Save periodically
+  if (now - lastSave > 1000) {
+
     try {
       localStorage.setItem(
         SAVE_KEY,
-        JSON.stringify({ angle, speed, spins })
+        JSON.stringify({
+          angle,
+          speed,
+          spins
+        })
       );
-    } catch (_) {}
+    } catch (e) {}
+
+    lastSave = now;
   }
 
-  // Every click adds momentum. There is no maximum speed.
-  function addSpeed() {
-    speed += 110;
-  }
-
-  banana.addEventListener("pointerdown", (event) => {
-    event.preventDefault();
-    addSpeed();
-  });
-
-  banana.addEventListener("dragstart", (event) => {
-    event.preventDefault();
-  });
-
-  banana.addEventListener("keydown", (event) => {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      addSpeed();
-    }
-  });
-
-  function animate(now) {
-    const dt = Math.min((now - lastTime) / 1000, 0.05);
-    lastTime = now;
-
-    // Rotate according to current momentum.
-    angle += speed * dt;
-
-    // Count one spin for every completed 360°.
-    const completedSpins = Math.floor(angle / 360);
-
-    if (completedSpins > spins) {
-      spins = completedSpins;
-      counter.textContent = spins;
-    }
-
-    banana.style.transform = `rotate(${angle}deg)`;
-
-    // Linear friction: it gradually slows all the way to a stop.
-    const friction = 35;
-    speed = Math.max(0, speed - friction * dt);
-
-    // Save roughly once per second.
-    if (now - lastSave > 1000) {
-      save();
-      lastSave = now;
-    }
-
-    requestAnimationFrame(animate);
-  }
-
-  window.addEventListener("beforeunload", save);
 
   requestAnimationFrame(animate);
+}
+
+
+requestAnimationFrame(animate);
+
 })();
 </script>
 
