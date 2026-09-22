@@ -1,6 +1,4 @@
-from pathlib import Path
-
-html = r'''<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="sv">
 <head>
 <meta charset="UTF-8">
@@ -102,8 +100,4 @@ body{display:flex;align-items:center;justify-content:center;user-select:none;-we
 })();
 </script>
 </body>
-</html>'''
-
-path = Path("/mnt/data/index.html")
-path.write_text(html, encoding="utf-8")
-print(f"[Download index.html](sandbox:{path})")
+</html>
