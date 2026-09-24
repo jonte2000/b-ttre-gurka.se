@@ -181,60 +181,46 @@ body{
     ==============================
     */
 
-    function formatNumber(n){
+      function formatNumber(number) {
 
-        n = Math.max(
-            0,
-            Math.floor(n)
+        number = Math.max(
+          0,
+          Math.floor(number)
         );
 
-        if(n >= 1000000000){
 
-            return (
-                n / 1000000000
-            )
+        // Billion
+
+        if (number >= 1000000000) {
+
+          return (
+            number / 1000000000
+          )
             .toFixed(
-                n >= 10000000000
-                    ? 0
-                    : 1
+              number >= 10000000000 ? 0 : 1
             )
-            .replace(/\.0$/,"")
-            + "B";
+            .replace(/\.0$/, "") + "B";
         }
 
 
-        if(n >= 1000000){
+        // Million
 
-            return (
-                n / 1000000
-            )
+        if (number >= 1000000) {
+
+          return (
+            number / 1000000
+          )
             .toFixed(
-                n >= 10000000
-                    ? 0
-                    : 1
+              number >= 10000000 ? 0 : 1
             )
-            .replace(/\.0$/,"")
-            + "M";
+            .replace(/\.0$/, "") + "M";
         }
 
 
-        if(n >= 1000){
+        // Normal number
 
-            return (
-                n / 1000
-            )
-            .toFixed(
-                n >= 10000
-                    ? 0
-                    : 1
-            )
-            .replace(/\.0$/,"")
-            + "K";
-        }
-
-
-        return n.toLocaleString("en-US");
-    }
+        return number.toLocaleString("en-US");
+      }
 
 
     /*
